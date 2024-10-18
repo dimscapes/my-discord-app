@@ -50,50 +50,25 @@
               <li class="nav-item" id="adminTab" style="display:none;"><a class="nav-link pl-3 me-3" href="/admin">Admin</a></li>
             </ul>
             <button class="btn btn-primary" id="login-button">Log out</button>
-            <script>
-              document.getElementById('login-button').addEventListener('click', function() {
-                  window.location.href = '/logout'; // Redirect to the Discord login route
-              });
-          </script>
           <script>
-            // Fetch user roles from the server
+            document.getElementById('login-button').addEventListener('click', function() {
+              window.location.href = '/logout';
+            });
+
+            // Fetch user roles and update the navigation tabs
             fetch('/api/user/roles')
-              .then(response => response.json())
-              .then(data => {
-                const roles = data.roles;
-          
-                // Check if the user has the "Cape Team" or "Administration" role
-                if (roles.includes('Cape Team') || roles.includes('Administration')) {
-                  document.getElementById('capeToolTab').style.display = 'block';  // Show the "Cape Tool" tab
+              .then(response => {
+                if (!response.ok) {
+                  throw new Error('Network response was not ok');
                 }
+                return response.json();
               })
-              .catch(error => console.error('Error fetching roles:', error));
-          </script>
-          <script>
-            // Fetch user roles from the server
-            fetch('/api/user/roles')
-              .then(response => response.json())
               .then(data => {
                 const roles = data.roles;
-          
-                // Check if the user has the "Cape Team" or "Administration" role
-                if (roles.includes('Moderation') || roles.includes('Administration')) {
-                  document.getElementById('moderationTab').style.display = 'block';  // Show the "Cape Tool" tab
-                }
-              })
-              .catch(error => console.error('Error fetching roles:', error));
-          </script>
-          <script>
-            // Fetch user roles from the server
-            fetch('/api/user/roles')
-              .then(response => response.json())
-              .then(data => {
-                const roles = data.roles;
-          
-                // Check if the user has the "Cape Team" or "Administration" role
-                if (roles.includes('Administration')) {
-                  document.getElementById('adminTab').style.display = 'block';  // Show the "Cape Tool" tab
-                }
+                // Check roles and display corresponding tabs
+                document.getElementById('capeToolTab').style.display = roles.includes('Cape Team') || roles.includes('Administration') ? 'block' : 'none';
+                document.getElementById('moderationTab').style.display = roles.includes('Moderation') || roles.includes('Administration') ? 'block' : 'none';
+                document.getElementById('adminTab').style.display = roles.includes('Administration') ? 'block' : 'none';
               })
               .catch(error => console.error('Error fetching roles:', error));
           </script>
