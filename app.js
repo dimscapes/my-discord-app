@@ -157,16 +157,18 @@ app.get('/auth/discord/callback',
 function ensureAuthenticated(req, res, next) {
     if (req.isAuthenticated()) {
         const userID = req.user.id;
+        console.log(`User ID: ${userID}, Roles: ${JSON.stringify(usersData[userID]?.roles)}`);
 
         // Check if the authenticated user exists in the usersData
         if (usersData[userID]) {
             return next();  // User is allowed, proceed to the next middleware
         } else {
-            // User is not authorized, send a 403 forbidden response
+            console.log('User not found in usersData:', userID);
             return res.status(403).send('You are not authorized to access this page.');
         }
     }
     // User is not authenticated, redirect to home page or login
+    console.log('User not authenticated, redirecting to home page.');
     res.redirect('/');
 }
 
