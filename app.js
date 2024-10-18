@@ -23,6 +23,7 @@ function saveUsersData() {
     fs.writeFileSync(usersDataFile, JSON.stringify(usersData, null, 2), 'utf8');
 }
 
+console.log(usersData);
 
 let availableRoles = [
     'Cape Team', 'Cape Head', 'Customer Support', 
@@ -173,12 +174,11 @@ function ensureAuthenticated(req, res, next) {
     console.log('Current Session:', req.session);
     console.log('Current User:', req.user);
     if (req.isAuthenticated()) {
-        const userID = req.user.id;
-        console.log(`User ID: ${userID}, Roles: ${JSON.stringify(usersData[userID]?.roles)}`);
-        if (usersData[userID]) {
+        console.log(`User ID: ${req.user.id}, Roles: ${JSON.stringify(usersData[req.user.id]?.roles)}`);
+        if (usersData[req.user.id]) {
             return next();
         } else {
-            console.log('User not found in usersData:', userID);
+            console.log('User not found in usersData:', req.user.id);
             return res.status(403).send('You are not authorized to access this page.');
         }
     }
