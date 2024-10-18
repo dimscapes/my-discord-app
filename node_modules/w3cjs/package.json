@@ -1,0 +1,31 @@
+{
+  "author": "Thomas Davis <thomasalwyndavis@gmail.com>",
+  "name": "w3cjs",
+  "description": "A node.js module for using the w3c validator.",
+  "license": "Unlicense",
+  "version": "0.4.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thomasdavis/w3cjs"
+  },
+  "main": "./lib/w3cjs",
+  "bin": {
+    "w3cjs": "./bin/w3cjs"
+  },
+  "dependencies": {
+    "commander": "^2.9.0",
+    "superagent": "^3.5.2",
+    "superagent-proxy": "^1.0.2"
+  },
+  "devDependencies": {},
+  "optionalDependencies": {},
+  "engines": {
+    "node": "*"
+  },
+  "keywords": [
+    "w3c",
+    "validator",
+    "html",
+    "html5"
+  ]
+}
