@@ -4,7 +4,7 @@
   "description": "A bootstrap 5 theme",
   "main": "gulpfile.js",
   "scripts": {
-    "start": "gulp",
+    "start": "node app.js",
     "build": "cross-env MODE=PROD gulp build",
     "build:test": "cross-env MODE=PROD gulp build:test",
     "live": "gulp compile:all && cross-env MODE=PROD gulp live",
