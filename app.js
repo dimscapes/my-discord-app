@@ -115,8 +115,7 @@ app.get('/discord', (req, res) => {
   });
   
 app.get('/api/user', ensureAuthenticated, (req, res) => {
-    const username = users[req.user.id]?.username || "User"; // Get the username from the users object
-    res.json({ username }); // Send the username as a JSON response
+    res.json({ username: req.user.nickname || 'Guest' }); // Send user data
 });
 // In your '/api/user/roles' endpoint, log the userID and roles
 app.get('/api/user/roles', ensureAuthenticated, (req, res) => {
