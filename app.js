@@ -171,7 +171,7 @@ app.get('/auth/discord/callback',
 
 function ensureAuthenticated(req, res, next) {
     if (req.isAuthenticated()) {
-        const userID = req.session.passport['user']; // Retrieve the user ID
+        const userID = req.session.passport['user'] || req.user.id; // Retrieve the user ID
         console.log(`User ID: ${userID}, Roles: ${JSON.stringify(usersData[userID]?.roles)}`);
         if (usersData[userID]) {
             return next();
