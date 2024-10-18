@@ -42,17 +42,20 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: { 
-        secure: process.env.NODE_ENV === 'production',
+        secure: false, // Make sure to set this to false during development
         httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000
+        maxAge: 24 * 60 * 60 * 1000 // 1 day
     }
 }));
 
 // After initializing the session
 app.use((req, res, next) => {
-    console.log('Session:', req.session); // Log the session data
+    console.log(`Request URL: ${req.originalUrl}`);
+    console.log(`Is Authenticated: ${req.isAuthenticated()}`);
+    console.log(`User Data: ${JSON.stringify(req.user)}`);
     next();
 });
+
 
 
 // Passport initialization
@@ -95,11 +98,12 @@ passport.use(new DiscordStrategy({
 // Serialize user into the session
 passport.serializeUser((user, done) => {
     console.log('Serializing user:', user);  // Log user being serialized
-    done(null, user.id);
+    done(null, user.id);  // Ensure this is correct
 });
 
 passport.deserializeUser((id, done) => {
-    const userData = usersData[id];
+    const userData = usersData[id];  // Make sure usersData has this ID
+    console.log('Deserializing user with ID:', id, 'User data:', userData); // Debugging line
     if (userData) {
         done(null, { id, roles: userData.roles, nickname: userData.nickname });
     } else {
