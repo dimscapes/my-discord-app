@@ -94,15 +94,14 @@ passport.use(new DiscordStrategy({
 
 // Serialize user into the session
 passport.serializeUser((user, done) => {
-    done(null, user.id);  // Only store the user ID in session
+    console.log('Serializing user:', user);  // Log user being serialized
+    done(null, user.id);
 });
 
-// Deserialize user from the session
 passport.deserializeUser((id, done) => {
-    // Retrieve user data from usersData
-    const userData = usersData[id]; // Fetching user data based on ID
+    const userData = usersData[id];
     if (userData) {
-        done(null, { id, roles: userData.roles, nickname: userData.nickname }); // Include roles
+        done(null, { id, roles: userData.roles, nickname: userData.nickname });
     } else {
         done(new Error('User not found'));
     }
@@ -175,8 +174,8 @@ app.get('/auth/discord/callback',
 // Middleware to ensure the user is authenticated
 function ensureAuthenticated(req, res, next) {
     console.log('Authenticated:', req.isAuthenticated());
+    console.log('Session:', req.session);  // Log the entire session object
     console.log('User:', req.user);  // Log the user object
-
     if (req.isAuthenticated()) {
         const userID = req.user.id;
 
