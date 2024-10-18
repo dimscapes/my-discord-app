@@ -169,12 +169,14 @@ function ensureAuthenticated(req, res, next) {
             return next();  // User is allowed, proceed to the next middleware
         } else {
             // User is not authorized, send a 403 forbidden response
-            return res.status(403).send('You are not authorized to access this page.');
+            return res.status(403).json({ message: 'You are not authorized to access this page.' });
         }
     }
-    // User is not authenticated, redirect to home page or login
-    res.redirect('/');
+    // User is not authenticated, send a 401 unauthorized response
+    return res.status(401).json({ message: 'Unauthorized' }); // Change to JSON response
 }
+
+
 
 
 // Admin route to manage permissions and display user profiles
