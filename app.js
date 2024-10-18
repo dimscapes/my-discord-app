@@ -51,7 +51,6 @@ app.use(session({
 // After initializing the session
 app.use((req, res, next) => {
     console.log(`Request URL: ${req.originalUrl}`);
-    console.log(`Is Authenticated: ${req.isAuthenticated()}`);
     console.log(`User Data: ${JSON.stringify(req.user)}`);
     next();
 });
