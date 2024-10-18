@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "app.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",   // This catches all routes
+      "dest": "/app.js" // Send them to the Node.js server (app.js)
+    }
+  ]
+}
