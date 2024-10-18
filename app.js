@@ -62,22 +62,22 @@ passport.use(new DiscordStrategy({
     scope: scopes
 },
 (accessToken, refreshToken, profile, done) => {
-    console.log('Discord profile received:', profile);
     if (!usersData[profile.id]) {
-        console.log('User is not authorized:', profile.id);
         return done(null, false, { message: 'You are not authorized to log in.' });
     }
 
-    // Save the user profile information if they are authorized
+    // Save user profile information
     users[profile.id] = {
         id: profile.id,
         username: profile.username,
         avatar: profile.avatar,
         discriminator: profile.discriminator
     };
+
+    // Log the session here
+    console.log("Session before done:", profile);
     return done(null, profile);
 }));
-
 
 
 
@@ -149,6 +149,7 @@ app.get('/auth/discord/callback',
     passport.authenticate('discord', { failureRedirect: '/' }),
     (req, res) => {
         console.log('User authenticated successfully:', req.user);
+        console.log("Session after authentication:", req.session);
         res.redirect('/staff');  // Successful login, redirect to secure page
     }
 );
