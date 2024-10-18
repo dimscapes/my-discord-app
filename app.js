@@ -42,11 +42,18 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: { 
-        secure: false, // Change to true in production
+        secure: process.env.NODE_ENV === 'production',
         httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000 // 1 day
+        maxAge: 24 * 60 * 60 * 1000
     }
 }));
+
+// After initializing the session
+app.use((req, res, next) => {
+    console.log('Session:', req.session); // Log the session data
+    next();
+});
+
 
 // Passport initialization
 app.use(passport.initialize());
