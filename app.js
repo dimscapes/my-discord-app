@@ -41,7 +41,7 @@ app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    cookie: { secure: true }  // Use secure: true if using HTTPS in production
+    cookie: { secure: false }  // Use secure: true if using HTTPS in production
 }));
 
 // Passport initialization
@@ -83,15 +83,13 @@ passport.use(new DiscordStrategy({
 
 // Serialize user into the session
 passport.serializeUser((user, done) => {
-    console.log('Serializing user:', user); // Added logging
-    done(null, user.id); // Store the user ID
+    done(null, user.id);
 });
 
-// Deserialize user from the session
 passport.deserializeUser((id, done) => {
-    User.findById(id, function(err, user) {
-        done(err, user);
-    });     
+    // Retrieve user information from usersData or another data source
+    const user = usersData[id];
+    done(null, user); // Or done(null, { id }); if you only want to store ID
 });
 
 app.get('/', (req, res) => {
@@ -166,9 +164,8 @@ app.get('/auth/discord/callback',
     passport.authenticate('discord', { failureRedirect: '/' }),
     (req, res) => {
         console.log('User authenticated successfully:', req.user);
-        req.user.roles = usersData[req.user.id]?.roles || []; // Add roles to req.user
-        console.log("User roles:", req.user.roles);
-        res.redirect('/staff'); 
+        console.log("Session after authentication:", req.session);
+        res.redirect('/staff');
     }
 );
 
