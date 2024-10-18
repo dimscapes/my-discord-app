@@ -23,8 +23,6 @@ function saveUsersData() {
     fs.writeFileSync(usersDataFile, JSON.stringify(usersData, null, 2), 'utf8');
 }
 
-console.log(usersData);
-
 let availableRoles = [
     'Cape Team', 'Cape Head', 'Customer Support', 
     'Support Head', 'Moderation', 'Moderation Administration', 'Administration'
@@ -171,16 +169,14 @@ app.get('/auth/discord/callback',
 );
 
 function ensureAuthenticated(req, res, next) {
-    console.log('Current Session:', req.session);
-    console.log('Current User:', req.user);
-    console.log(req.session.passport);
     console.log(req.session.passport['user']);
     if (req.isAuthenticated()) {
-        console.log(`User ID: ${req.user.id}, Roles: ${JSON.stringify(usersData[req.user.id]?.roles)}`);
-        if (usersData[req.user.id]) {
+        const userID = req.session.passport['user']; // Retrieve the user ID
+        console.log(`User ID: ${userID}, Roles: ${JSON.stringify(usersData[userID]?.roles)}`);
+        if (usersData[userID]) {
             return next();
         } else {
-            console.log('User not found in usersData:', req.user.id);
+            console.log('User not found in usersData:', userID);
             return res.status(403).send('You are not authorized to access this page.');
         }
     }
