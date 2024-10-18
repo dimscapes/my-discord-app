@@ -119,11 +119,17 @@ app.get('/privacy', (req, res) => {
 app.get('/staff', ensureAuthenticated, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'staff.html'));
 });
-app.get('/cape', ensureCapeTeam, (req, res) => {
+// Usage of the middleware
+app.get('/cape', ensureRoles(['Cape Team']), (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'cape.html'));
 });
-app.get('/mod', ensureModeration, (req, res) => {
+
+app.get('/mod', ensureRoles(['Moderation']), (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'mod.html'));
+});
+
+app.get('/admin', ensureRoles(['Administration']), (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 app.get('/discord', (req, res) => {
     res.redirect('https://discord.gg/9zk4umeHcD');
@@ -197,10 +203,6 @@ function ensureAuthenticated(req, res, next) {
 
 
 
-// Admin route to manage permissions and display user profiles
-app.get('/admin', ensureAdministration, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
-});
 
 // Routes to get all users and roles (admin only)
 app.get('/api/admin/users', ensureAdministration, (req, res) => {
@@ -248,53 +250,23 @@ app.post('/api/admin/users/:id/roles', ensureAdministration, (req, res) => {
 });
 
 // Middleware to ensure user has "Cape Team" or "Administration" role
-function ensureCapeTeam(req, res, next) {
-    if (req.isAuthenticated()) {
-        const userID = req.user.id;
-        const userRoles = usersData[userID]?.roles || [];
+function ensureRoles(requiredRoles) {
+    return function(req, res, next) {
+        if (req.isAuthenticated()) {
+            const userID = req.user.id;
+            const userRoles = usersData[userID]?.roles || [];
 
-        // Check if user has "Cape Team" or "Administration" role
-        if (userRoles.includes('Cape Team') || userRoles.includes('Administration') || req.user.id === '372465696556187648') {
-            return next();  // User has access, proceed to the next middleware
-        } else {
-            // User is not authorized, send a 403 forbidden response
-            return res.status(403).send('You are not authorized to access this page.');
-        }
-    }
-    // User is not authenticated, redirect to home page or login
-    res.redirect('/');
-}
-function ensureModeration(req, res, next) {
-    if (req.isAuthenticated()) {
-        const userID = req.user.id;
-        const userRoles = usersData[userID]?.roles || [];
+            // Check if user has any of the required roles
+            const hasRole = requiredRoles.some(role => userRoles.includes(role)) || userID === adminUserID;
 
-        // Check if user has "Cape Team" or "Administration" role
-        if (userRoles.includes('Moderation') || userRoles.includes('Administration') || req.user.id === '372465696556187648') {
-            return next();  // User has access, proceed to the next middleware
-        } else {
-            // User is not authorized, send a 403 forbidden response
-            return res.status(403).send('You are not authorized to access this page.');
+            if (hasRole) {
+                return next();  // User has access
+            } else {
+                return res.status(403).send('You are not authorized to access this page.');
+            }
         }
-    }
-    // User is not authenticated, redirect to home page or login
-    res.redirect('/');
-}
-function ensureAdministration(req, res, next) {
-    if (req.isAuthenticated()) {
-        const userID = req.user.id;
-        const userRoles = usersData[userID]?.roles || [];
-
-        // Check if user has "Cape Team" or "Administration" role
-        if (userRoles.includes('Administration') || req.user.id === '372465696556187648') {
-            return next();  // User has access, proceed to the next middleware
-        } else {
-            // User is not authorized, send a 403 forbidden response
-            return res.status(403).send('You are not authorized to access this page.');
-        }
-    }
-    // User is not authenticated, redirect to home page or login
-    res.redirect('/');
+        res.redirect('/');
+    };
 }
 
 app.get('*', function(req, res){
