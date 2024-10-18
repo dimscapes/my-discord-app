@@ -96,18 +96,15 @@ passport.use(new DiscordStrategy({
 
 // Serialize user into the session
 passport.serializeUser((user, done) => {
-    console.log('Serializing user:', user);  // Log user being serialized
-    done(null, user.id);  // Ensure this is correct
+    console.log('Serializing user:', user);  
+    done(null, user.id); 
 });
 
 passport.deserializeUser((id, done) => {
-    console.log('Deserializing user ID:', id); // Debugging line
     const userData = usersData[id];  
-    console.log('User data found:', userData); // Debugging line
     if (userData) {
         done(null, { id, roles: userData.roles, nickname: userData.nickname });
     } else {
-        console.error('User not found for ID:', id); // Error logging
         done(new Error('User not found'));
     }
 });
@@ -178,6 +175,7 @@ app.get('/auth/discord/callback',
     passport.authenticate('discord', { failureRedirect: '/' }),
     (req, res) => {
         console.log('User logged in:', req.user);  // Log user data
+        console.log('User roles:', usersData[req.user.id]?.roles); // Log user roles
         res.redirect('/staff');
     }
 );
@@ -188,10 +186,8 @@ function ensureAuthenticated(req, res, next) {
     console.log('Session:', req.session);
     console.log('User:', req.user);
     if (req.isAuthenticated()) {
-        console.log('Authenticated user ID:', req.user.id);
         const userID = req.user.id;
         if (usersData[userID]) {
-            console.log('User found in usersData:', usersData[userID]);
             return next();
         } else {
             console.error('User not authorized:', userID);
@@ -201,7 +197,6 @@ function ensureAuthenticated(req, res, next) {
     console.error('User not authenticated');
     return res.status(401).json({ message: 'Unauthorized' });
 }
-
 
 // Routes to get all users and roles (admin only)
 app.get('/api/admin/users', ensureRoles(['Administration']), (req, res) => {
