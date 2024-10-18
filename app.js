@@ -89,8 +89,9 @@ passport.serializeUser((user, done) => {
 
 // Deserialize user from the session
 passport.deserializeUser((id, done) => {
-    const user = usersData[id] || null; // Fetch user from the usersData
-    done(null, user);
+    User.findById(id, function(err, user) {
+        done(err, user);
+    });     
 });
 
 app.get('/', (req, res) => {
