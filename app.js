@@ -42,9 +42,9 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: { 
-        secure: process.env.NODE_ENV === 'production', // true if in production
-        httpOnly: true, // Prevents JavaScript access to cookies
-        maxAge: 24 * 60 * 60 * 1000 // Example: cookie expires in 1 day
+        secure: false, // Change to true in production
+        httpOnly: true,
+        maxAge: 24 * 60 * 60 * 1000 // 1 day
     }
 }));
 
@@ -92,8 +92,13 @@ passport.serializeUser((user, done) => {
 
 // Deserialize user from the session
 passport.deserializeUser((id, done) => {
-    // Simulate user retrieval from database using the stored session ID
-    done(null, { id });
+    // Retrieve user data from usersData
+    const userData = usersData[id]; // Fetching user data based on ID
+    if (userData) {
+        done(null, { id, roles: userData.roles, nickname: userData.nickname }); // Include roles
+    } else {
+        done(new Error('User not found'));
+    }
 });
 
 app.get('/', (req, res) => {
@@ -155,7 +160,7 @@ app.get('/auth/discord', (req, res, next) => {
 app.get('/auth/discord/callback',
     passport.authenticate('discord', { failureRedirect: '/' }),
     (req, res) => {
-        // Successful login, redirect to secure page
+        console.log('User logged in:', req.user);  // Log user data
         res.redirect('/staff');
     }
 );
