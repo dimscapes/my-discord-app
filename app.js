@@ -173,7 +173,8 @@ app.get('/auth/discord/callback',
 function ensureAuthenticated(req, res, next) {
     console.log('Current Session:', req.session);
     console.log('Current User:', req.user);
-    console.log('Current UserID:', req.session.passport);
+    console.log(req.session.passport);
+    console.log(req.session.passport['user']);
     if (req.isAuthenticated()) {
         console.log(`User ID: ${req.user.id}, Roles: ${JSON.stringify(usersData[req.user.id]?.roles)}`);
         if (usersData[req.user.id]) {
