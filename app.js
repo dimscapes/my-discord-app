@@ -163,22 +163,25 @@ app.get('/auth/discord/callback',
 // Middleware to ensure the user is authenticated
 function ensureAuthenticated(req, res, next) {
     console.log('Authenticated:', req.isAuthenticated());
-    console.log('User:', req.user);
+    console.log('User:', req.user);  // Log the user object
 
     if (req.isAuthenticated()) {
         const userID = req.user.id;
 
         // Check if the authenticated user exists in the usersData
         if (usersData[userID]) {
+            console.log('User found in usersData:', usersData[userID]);
             return next();  // User is allowed, proceed to the next middleware
         } else {
-            // User is not authorized, send a 403 forbidden response
+            console.error('User not authorized:', userID);
             return res.status(403).json({ message: 'You are not authorized to access this page.' });
         }
     }
     // User is not authenticated, send a 401 unauthorized response
+    console.error('User not authenticated');
     return res.status(401).json({ message: 'Unauthorized' }); // Change to JSON response
 }
+
 
 
 
@@ -289,4 +292,6 @@ app.get('*', function(req, res){
 
 app.listen(PORT, () => {
     console.log(`Server is running on ${PORT}`);
+    console.log('Loaded users data:', usersData);
+
 });
