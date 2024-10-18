@@ -62,9 +62,9 @@ passport.use(new DiscordStrategy({
     scope: scopes
 },
 (accessToken, refreshToken, profile, done) => {
-    // Check if the user's Discord ID exists in usersData
+    console.log('Discord profile received:', profile);
     if (!usersData[profile.id]) {
-        // If user is not found in the allowed users list, block the login
+        console.log('User is not authorized:', profile.id);
         return done(null, false, { message: 'You are not authorized to log in.' });
     }
 
@@ -72,12 +72,12 @@ passport.use(new DiscordStrategy({
     users[profile.id] = {
         id: profile.id,
         username: profile.username,
-        avatar: profile.avatar,  // User avatar hash
-        discriminator: profile.discriminator  // User discriminator (e.g. #1234)
+        avatar: profile.avatar,
+        discriminator: profile.discriminator
     };
-    
     return done(null, profile);
 }));
+
 
 
 
@@ -148,8 +148,8 @@ app.get('/auth/discord', (req, res, next) => {
 app.get('/auth/discord/callback',
     passport.authenticate('discord', { failureRedirect: '/' }),
     (req, res) => {
-        // Successful login, redirect to secure page
-        res.redirect('/staff');
+        console.log('User authenticated successfully:', req.user);
+        res.redirect('/staff');  // Successful login, redirect to secure page
     }
 );
 
