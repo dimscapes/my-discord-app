@@ -41,7 +41,11 @@ app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    cookie: { secure: false }  // Use secure: true if using HTTPS in production
+    cookie: { 
+        secure: process.env.NODE_ENV === 'production', // true if in production
+        httpOnly: true, // Prevents JavaScript access to cookies
+        maxAge: 24 * 60 * 60 * 1000 // Example: cookie expires in 1 day
+    }
 }));
 
 // Passport initialization
@@ -284,5 +288,5 @@ app.get('*', function(req, res){
   });
 
 app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+    console.log(`Server is running on ${PORT}`);
 });
