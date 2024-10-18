@@ -83,13 +83,14 @@ passport.use(new DiscordStrategy({
 
 // Serialize user into the session
 passport.serializeUser((user, done) => {
-    done(null, user.id);  // Only store the user ID in session
+    console.log('Serializing user:', user); // Added logging
+    done(null, user.id); // Store the user ID
 });
 
 // Deserialize user from the session
 passport.deserializeUser((id, done) => {
-    // Simulate user retrieval from database using the stored session ID
-    done(null, { id });
+    const user = usersData[id] || null; // Fetch user from the usersData
+    done(null, user);
 });
 
 app.get('/', (req, res) => {
@@ -149,26 +150,25 @@ app.get('/auth/discord/callback',
     passport.authenticate('discord', { failureRedirect: '/' }),
     (req, res) => {
         console.log('User authenticated successfully:', req.user);
-        console.log("Session after authentication:", req.session);
-        res.redirect('/staff');  // Successful login, redirect to secure page
+        req.user.roles = usersData[req.user.id]?.roles || []; // Add roles to req.user
+        console.log("User roles:", req.user.roles);
+        res.redirect('/staff'); 
     }
 );
 
-// Middleware to ensure the user is authenticated
 function ensureAuthenticated(req, res, next) {
+    console.log('Current Session:', req.session);
+    console.log('Current User:', req.user);
     if (req.isAuthenticated()) {
         const userID = req.user.id;
         console.log(`User ID: ${userID}, Roles: ${JSON.stringify(usersData[userID]?.roles)}`);
-
-        // Check if the authenticated user exists in the usersData
         if (usersData[userID]) {
-            return next();  // User is allowed, proceed to the next middleware
+            return next();
         } else {
             console.log('User not found in usersData:', userID);
             return res.status(403).send('You are not authorized to access this page.');
         }
     }
-    // User is not authenticated, redirect to home page or login
     console.log('User not authenticated, redirecting to home page.');
     res.redirect('/');
 }
