@@ -136,6 +136,7 @@ app.get('/api/user', ensureAuthenticated, (req, res) => {
 app.get('/api/user/roles', ensureAuthenticated, (req, res) => {
     const userID = req.session.passport['user'];
     const roles = usersData[userID]?.roles || [];
+    console.log("HEY RO ", roles);
     res.json({ roles });  // Send the user's roles as a JSON response
 });
 
