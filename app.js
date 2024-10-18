@@ -237,7 +237,7 @@ app.post('/api/admin/users/:id/roles', ensureAdministration, (req, res) => {
 // Middleware to ensure user has "Cape Team" or "Administration" role
 function ensureCapeTeam(req, res, next) {
     if (req.isAuthenticated()) {
-        const userID = req.user.id;
+        const userID = req.session.passport['user']; // Retrieve the user ID
         const userRoles = usersData[userID]?.roles || [];
 
         // Check if user has "Cape Team" or "Administration" role
@@ -253,7 +253,7 @@ function ensureCapeTeam(req, res, next) {
 }
 function ensureModeration(req, res, next) {
     if (req.isAuthenticated()) {
-        const userID = req.user.id;
+        const userID = req.session.passport['user']; // Retrieve the user ID
         const userRoles = usersData[userID]?.roles || [];
 
         // Check if user has "Cape Team" or "Administration" role
@@ -269,7 +269,7 @@ function ensureModeration(req, res, next) {
 }
 function ensureAdministration(req, res, next) {
     if (req.isAuthenticated()) {
-        const userID = req.user.id;
+        const userID = req.session.passport['user']; // Retrieve the user ID
         const userRoles = usersData[userID]?.roles || [];
 
         // Check if user has "Cape Team" or "Administration" role
