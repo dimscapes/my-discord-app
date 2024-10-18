@@ -155,14 +155,25 @@
     <script>
       // Fetch the username from the API
       fetch('/api/user')
-          .then(response => response.json())
-          .then(data => {
-              const welcomeMessage = document.getElementById('welcome-message');
-              welcomeMessage.textContent = `Welcome, ${data.username}!`; // Update the welcome message with the username
-          })
-          .catch(err => {
-              console.error('Error fetching username:', err);
-          });
+    .then(response => {
+        if (response.status === 401) {
+            // Handle unauthorized access (redirect to login, show a message, etc.)
+            window.location.href = '/login'; // Example of redirecting to login page
+            throw new Error('User not authenticated');
+        }
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        const welcomeMessage = document.getElementById('welcome-message');
+        welcomeMessage.textContent = `Welcome, ${data.username}!`; // Update the welcome message with the username
+    })
+    .catch(err => {
+        console.error('Error fetching username:', err);
+    });
+
   </script>
 
   </body>
