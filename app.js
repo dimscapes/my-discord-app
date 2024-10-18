@@ -41,21 +41,8 @@ app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    cookie: { 
-        secure: true, // Make sure to set this to false during development
-        httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000 // 1 day
-    }
+    cookie: { secure: true }  // Use secure: true if using HTTPS in production
 }));
-
-// After initializing the session
-app.use((req, res, next) => {
-    console.log(`Request URL: ${req.originalUrl}`);
-    console.log(`User Data: ${JSON.stringify(req.user)}`);
-    next();
-});
-
-
 
 // Passport initialization
 app.use(passport.initialize());
@@ -96,21 +83,13 @@ passport.use(new DiscordStrategy({
 
 // Serialize user into the session
 passport.serializeUser((user, done) => {
-    console.log('Serializing user:', user);
-    done(null, user.id); // Correctly store the user ID
+    done(null, user.id);  // Only store the user ID in session
 });
 
 // Deserialize user from the session
 passport.deserializeUser((id, done) => {
-    console.log('Deserializing user ID:', id);
-    const userData = usersData[id];  
-    console.log('User data found:', userData);
-    if (userData) {
-        done(null, { id, roles: userData.roles, nickname: userData.nickname });
-    } else {
-        console.error('User not found for ID:', id);
-        done(new Error('User not found'));
-    }
+    // Simulate user retrieval from database using the stored session ID
+    done(null, { id });
 });
 
 app.get('/', (req, res) => {
@@ -123,39 +102,28 @@ app.get('/privacy', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'privacy.html'));
 });
 app.get('/staff', ensureAuthenticated, (req, res) => {
-    console.log('STAFF Session Data:', req.session);
-    console.log('STAFF User Data:', req.user);
     res.sendFile(path.join(__dirname, 'public', 'staff.html'));
 });
-// Usage of the middleware
-app.get('/cape', ensureRoles(['Cape Team']), (req, res) => {
+app.get('/cape', ensureCapeTeam, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'cape.html'));
 });
-
-app.get('/mod', ensureRoles(['Moderation']), (req, res) => {
+app.get('/mod', ensureModeration, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'mod.html'));
-});
-
-app.get('/admin', ensureRoles(['Administration']), (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 app.get('/discord', (req, res) => {
     res.redirect('https://discord.gg/9zk4umeHcD');
   });
   
 app.get('/api/user', ensureAuthenticated, (req, res) => {
-    res.json({ username: req.user.nickname || 'Guest' }); // Send user data
+    const username = users[req.user.id]?.username || "User"; // Get the username from the users object
+    res.json({ username }); // Send the username as a JSON response
 });
-// In your '/api/user/roles' endpoint, log the userID and roles
+// Route to get the current user's roles
 app.get('/api/user/roles', ensureAuthenticated, (req, res) => {
-    console.log('Fetching roles for user:', req.user.id); // Log user ID
     const userID = req.user.id;
     const roles = usersData[userID]?.roles || [];
-    console.log('Roles found:', roles); // Log roles found
     res.json({ roles });  // Send the user's roles as a JSON response
 });
-
-
 
 
 // Logout route
@@ -180,41 +148,44 @@ app.get('/auth/discord', (req, res, next) => {
 app.get('/auth/discord/callback',
     passport.authenticate('discord', { failureRedirect: '/' }),
     (req, res) => {
-        console.log('User logged in:', req.user);  // Log user data
-        console.log('User roles:', usersData[req.user.id]?.roles); // Log user roles
+        // Successful login, redirect to secure page
         res.redirect('/staff');
     }
 );
 
 // Middleware to ensure the user is authenticated
 function ensureAuthenticated(req, res, next) {
-    console.log('Authenticated:', req.isAuthenticated());
-    console.log('Session:', req.session);
-    console.log('User:', req.user);
-    if (req.isAuthenticated() && req.user) {
+    if (req.isAuthenticated()) {
         const userID = req.user.id;
+
+        // Check if the authenticated user exists in the usersData
         if (usersData[userID]) {
-            return next();
+            return next();  // User is allowed, proceed to the next middleware
         } else {
-            console.error('User not authorized:', userID);
-            return res.status(403).json({ message: 'You are not authorized to access this page.' });
+            // User is not authorized, send a 403 forbidden response
+            return res.status(403).send('You are not authorized to access this page.');
         }
     }
-    console.error('User not authenticated');
-    return res.status(401).json({ message: 'Unauthorized' });
+    // User is not authenticated, redirect to home page or login
+    res.redirect('/');
 }
 
+// Admin route to manage permissions and display user profiles
+app.get('/admin', ensureAdministration, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
 // Routes to get all users and roles (admin only)
-app.get('/api/admin/users', ensureRoles(['Administration']), (req, res) => {
+app.get('/api/admin/users', ensureAdministration, (req, res) => {
     res.json(usersData);  // Send all users and their roles
 });
 
-app.get('/api/admin/roles', ensureRoles(['Administration']), (req, res) => {
+app.get('/api/admin/roles', ensureAdministration, (req, res) => {
     res.json(availableRoles);  // Send all available roles
 });
 
 // Route to add a new user (admin only)
-app.post('/api/admin/users', ensureRoles(['Administration']), (req, res) => {
+app.post('/api/admin/users', ensureAdministration, (req, res) => {
     const { userId, roles, nickname } = req.body;
     if (userId && Array.isArray(roles) && nickname) {
         usersData[userId] = { roles, nickname };
@@ -225,7 +196,7 @@ app.post('/api/admin/users', ensureRoles(['Administration']), (req, res) => {
     }
 });
 
-app.delete('/api/admin/users/:id', ensureRoles(['Administration']), (req, res) => {
+app.delete('/api/admin/users/:id', ensureAdministration, (req, res) => {
     const userId = req.params.id;
     if (usersData[userId]) {
         delete usersData[userId];
@@ -238,7 +209,7 @@ app.delete('/api/admin/users/:id', ensureRoles(['Administration']), (req, res) =
 
 
 // Route to add/remove roles from a user
-app.post('/api/admin/users/:id/roles', ensureRoles(['Administration']), (req, res) => {
+app.post('/api/admin/users/:id/roles', ensureAdministration, (req, res) => {
     const userId = req.params.id;
     const { roles } = req.body;
     if (usersData[userId] && Array.isArray(roles)) {
@@ -250,23 +221,53 @@ app.post('/api/admin/users/:id/roles', ensureRoles(['Administration']), (req, re
 });
 
 // Middleware to ensure user has "Cape Team" or "Administration" role
-function ensureRoles(requiredRoles) {
-    return function(req, res, next) {
-        if (req.isAuthenticated()) {
-            const userID = req.user.id;
-            const userRoles = usersData[userID]?.roles || [];
+function ensureCapeTeam(req, res, next) {
+    if (req.isAuthenticated()) {
+        const userID = req.user.id;
+        const userRoles = usersData[userID]?.roles || [];
 
-            // Check if user has any of the required roles
-            const hasRole = requiredRoles.some(role => userRoles.includes(role)) || userID === adminUserID;
-
-            if (hasRole) {
-                return next();  // User has access
-            } else {
-                return res.status(403).send('You are not authorized to access this page.');
-            }
+        // Check if user has "Cape Team" or "Administration" role
+        if (userRoles.includes('Cape Team') || userRoles.includes('Administration') || req.user.id === '372465696556187648') {
+            return next();  // User has access, proceed to the next middleware
+        } else {
+            // User is not authorized, send a 403 forbidden response
+            return res.status(403).send('You are not authorized to access this page.');
         }
-        res.redirect('/');
-    };
+    }
+    // User is not authenticated, redirect to home page or login
+    res.redirect('/');
+}
+function ensureModeration(req, res, next) {
+    if (req.isAuthenticated()) {
+        const userID = req.user.id;
+        const userRoles = usersData[userID]?.roles || [];
+
+        // Check if user has "Cape Team" or "Administration" role
+        if (userRoles.includes('Moderation') || userRoles.includes('Administration') || req.user.id === '372465696556187648') {
+            return next();  // User has access, proceed to the next middleware
+        } else {
+            // User is not authorized, send a 403 forbidden response
+            return res.status(403).send('You are not authorized to access this page.');
+        }
+    }
+    // User is not authenticated, redirect to home page or login
+    res.redirect('/');
+}
+function ensureAdministration(req, res, next) {
+    if (req.isAuthenticated()) {
+        const userID = req.user.id;
+        const userRoles = usersData[userID]?.roles || [];
+
+        // Check if user has "Cape Team" or "Administration" role
+        if (userRoles.includes('Administration') || req.user.id === '372465696556187648') {
+            return next();  // User has access, proceed to the next middleware
+        } else {
+            // User is not authorized, send a 403 forbidden response
+            return res.status(403).send('You are not authorized to access this page.');
+        }
+    }
+    // User is not authenticated, redirect to home page or login
+    res.redirect('/');
 }
 
 app.get('*', function(req, res){
@@ -274,7 +275,5 @@ app.get('*', function(req, res){
   });
 
 app.listen(PORT, () => {
-    console.log(`Server is running on ${PORT}`);
-    console.log('Loaded users data:', usersData);
-
+    console.log(`Server is running on http://localhost:${PORT}`);
 });
