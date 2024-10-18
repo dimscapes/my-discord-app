@@ -123,6 +123,8 @@ app.get('/privacy', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'privacy.html'));
 });
 app.get('/staff', ensureAuthenticated, (req, res) => {
+    console.log('STAFF Session Data:', req.session);
+    console.log('STAFF User Data:', req.user);
     res.sendFile(path.join(__dirname, 'public', 'staff.html'));
 });
 // Usage of the middleware
