@@ -119,12 +119,13 @@ app.get('/api/user', ensureAuthenticated, (req, res) => {
 });
 // In your '/api/user/roles' endpoint, log the userID and roles
 app.get('/api/user/roles', ensureAuthenticated, (req, res) => {
+    console.log('Fetching roles for user:', req.user.id); // Log user ID
     const userID = req.user.id;
     const roles = usersData[userID]?.roles || [];
-    console.log('User ID:', userID);
-    console.log('Roles:', roles);
+    console.log('Roles found:', roles); // Log roles found
     res.json({ roles });  // Send the user's roles as a JSON response
 });
+
 
 
 
