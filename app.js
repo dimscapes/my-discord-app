@@ -42,7 +42,7 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: { 
-        secure: false, // Make sure to set this to false during development
+        secure: true, // Make sure to set this to false during development
         httpOnly: true,
         maxAge: 24 * 60 * 60 * 1000 // 1 day
     }
@@ -101,11 +101,13 @@ passport.serializeUser((user, done) => {
 });
 
 passport.deserializeUser((id, done) => {
-    const userData = usersData[id];  // Make sure usersData has this ID
-    console.log('Deserializing user with ID:', id, 'User data:', userData); // Debugging line
+    console.log('Deserializing user ID:', id); // Debugging line
+    const userData = usersData[id];  
+    console.log('User data found:', userData); // Debugging line
     if (userData) {
         done(null, { id, roles: userData.roles, nickname: userData.nickname });
     } else {
+        console.error('User not found for ID:', id); // Error logging
         done(new Error('User not found'));
     }
 });
@@ -183,28 +185,22 @@ app.get('/auth/discord/callback',
 // Middleware to ensure the user is authenticated
 function ensureAuthenticated(req, res, next) {
     console.log('Authenticated:', req.isAuthenticated());
-    console.log('Session:', req.session);  // Log the entire session object
-    console.log('User:', req.user);  // Log the user object
+    console.log('Session:', req.session);
+    console.log('User:', req.user);
     if (req.isAuthenticated()) {
+        console.log('Authenticated user ID:', req.user.id);
         const userID = req.user.id;
-
-        // Check if the authenticated user exists in the usersData
         if (usersData[userID]) {
             console.log('User found in usersData:', usersData[userID]);
-            return next();  // User is allowed, proceed to the next middleware
+            return next();
         } else {
             console.error('User not authorized:', userID);
             return res.status(403).json({ message: 'You are not authorized to access this page.' });
         }
     }
-    // User is not authenticated, send a 401 unauthorized response
     console.error('User not authenticated');
-    return res.status(401).json({ message: 'Unauthorized' }); // Change to JSON response
+    return res.status(401).json({ message: 'Unauthorized' });
 }
-
-
-
-
 
 
 // Routes to get all users and roles (admin only)
