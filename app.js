@@ -129,12 +129,12 @@ app.get('/discord', (req, res) => {
   });
   
 app.get('/api/user', ensureAuthenticated, (req, res) => {
-    const username = users[req.user.id]?.username || "User"; // Get the username from the users object
+    const username = users[req.session.passport['user']]?.username || "User"; // Get the username from the users object
     res.json({ username }); // Send the username as a JSON response
 });
 // Route to get the current user's roles
 app.get('/api/user/roles', ensureAuthenticated, (req, res) => {
-    const userID = req.user.id;
+    const userID = req.session.passport['user'];
     const roles = usersData[userID]?.roles || [];
     res.json({ roles });  // Send the user's roles as a JSON response
 });
@@ -169,7 +169,6 @@ app.get('/auth/discord/callback',
 );
 
 function ensureAuthenticated(req, res, next) {
-    console.log(req.session.passport['user']);
     if (req.isAuthenticated()) {
         const userID = req.session.passport['user']; // Retrieve the user ID
         console.log(`User ID: ${userID}, Roles: ${JSON.stringify(usersData[userID]?.roles)}`);
