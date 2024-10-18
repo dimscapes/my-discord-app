@@ -118,12 +118,15 @@ app.get('/api/user', ensureAuthenticated, (req, res) => {
     const username = users[req.user.id]?.username || "User"; // Get the username from the users object
     res.json({ username }); // Send the username as a JSON response
 });
-// Route to get the current user's roles
+// In your '/api/user/roles' endpoint, log the userID and roles
 app.get('/api/user/roles', ensureAuthenticated, (req, res) => {
     const userID = req.user.id;
     const roles = usersData[userID]?.roles || [];
+    console.log('User ID:', userID);
+    console.log('Roles:', roles);
     res.json({ roles });  // Send the user's roles as a JSON response
 });
+
 
 
 // Logout route
@@ -155,6 +158,9 @@ app.get('/auth/discord/callback',
 
 // Middleware to ensure the user is authenticated
 function ensureAuthenticated(req, res, next) {
+    console.log('Authenticated:', req.isAuthenticated());
+    console.log('User:', req.user);
+
     if (req.isAuthenticated()) {
         const userID = req.user.id;
 
@@ -169,6 +175,7 @@ function ensureAuthenticated(req, res, next) {
     // User is not authenticated, redirect to home page or login
     res.redirect('/');
 }
+
 
 // Admin route to manage permissions and display user profiles
 app.get('/admin', ensureAdministration, (req, res) => {
