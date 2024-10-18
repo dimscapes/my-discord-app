@@ -129,12 +129,12 @@ app.get('/discord', (req, res) => {
   });
   
 app.get('/api/user', ensureAuthenticated, (req, res) => {
-    const username = users[req.session.passport['user']]?.username || "User"; // Get the username from the users object
+    const username = users[req.user.id]?.username || "User"; // Get the username from the users object
     res.json({ username }); // Send the username as a JSON response
 });
 // Route to get the current user's roles
 app.get('/api/user/roles', ensureAuthenticated, (req, res) => {
-    const userID = req.session.passport['user'];
+    const userID = req.user.id;
     const roles = usersData[userID]?.roles || [];
     console.log("HEY RO ", roles);
     res.json({ roles });  // Send the user's roles as a JSON response
