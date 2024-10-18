@@ -96,15 +96,19 @@ passport.use(new DiscordStrategy({
 
 // Serialize user into the session
 passport.serializeUser((user, done) => {
-    console.log('Serializing user:', user);  
-    done(null, user.id); 
+    console.log('Serializing user:', user);
+    done(null, user.id); // Correctly store the user ID
 });
 
+// Deserialize user from the session
 passport.deserializeUser((id, done) => {
+    console.log('Deserializing user ID:', id);
     const userData = usersData[id];  
+    console.log('User data found:', userData);
     if (userData) {
         done(null, { id, roles: userData.roles, nickname: userData.nickname });
     } else {
+        console.error('User not found for ID:', id);
         done(new Error('User not found'));
     }
 });
@@ -185,7 +189,7 @@ function ensureAuthenticated(req, res, next) {
     console.log('Authenticated:', req.isAuthenticated());
     console.log('Session:', req.session);
     console.log('User:', req.user);
-    if (req.isAuthenticated()) {
+    if (req.isAuthenticated() && req.user) {
         const userID = req.user.id;
         if (usersData[userID]) {
             return next();
