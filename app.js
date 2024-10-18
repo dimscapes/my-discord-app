@@ -103,8 +103,23 @@ app.get('/privacy', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'privacy.html'));
 });
 app.get('/staff', ensureAuthenticated, (req, res) => {
+    // Log the authenticated user's information for debugging
+    console.log('User accessed /staff:', {
+        id: req.user.id,
+        username: req.user.username,
+        roles: req.user.roles // Assuming roles are added during authentication
+    });
+
+    // Optionally, you can conditionally render or serve different files based on roles
+    if (req.user.roles.includes('Administration')) {
+        console.log('User is an administrator.');
+        // You can send a different file or additional data for admins here if needed
+    }
+
+    // Send the staff.html file
     res.sendFile(path.join(__dirname, 'public', 'staff.html'));
 });
+
 app.get('/cape', ensureCapeTeam, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'cape.html'));
 });
