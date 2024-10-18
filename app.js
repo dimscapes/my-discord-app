@@ -205,16 +205,16 @@ function ensureAuthenticated(req, res, next) {
 
 
 // Routes to get all users and roles (admin only)
-app.get('/api/admin/users', ensureAdministration, (req, res) => {
+app.get('/api/admin/users', ensureRoles(['Administration']), (req, res) => {
     res.json(usersData);  // Send all users and their roles
 });
 
-app.get('/api/admin/roles', ensureAdministration, (req, res) => {
+app.get('/api/admin/roles', ensureRoles(['Administration']), (req, res) => {
     res.json(availableRoles);  // Send all available roles
 });
 
 // Route to add a new user (admin only)
-app.post('/api/admin/users', ensureAdministration, (req, res) => {
+app.post('/api/admin/users', ensureRoles(['Administration']), (req, res) => {
     const { userId, roles, nickname } = req.body;
     if (userId && Array.isArray(roles) && nickname) {
         usersData[userId] = { roles, nickname };
@@ -225,7 +225,7 @@ app.post('/api/admin/users', ensureAdministration, (req, res) => {
     }
 });
 
-app.delete('/api/admin/users/:id', ensureAdministration, (req, res) => {
+app.delete('/api/admin/users/:id', ensureRoles(['Administration']), (req, res) => {
     const userId = req.params.id;
     if (usersData[userId]) {
         delete usersData[userId];
@@ -238,7 +238,7 @@ app.delete('/api/admin/users/:id', ensureAdministration, (req, res) => {
 
 
 // Route to add/remove roles from a user
-app.post('/api/admin/users/:id/roles', ensureAdministration, (req, res) => {
+app.post('/api/admin/users/:id/roles', ensureRoles(['Administration']), (req, res) => {
     const userId = req.params.id;
     const { roles } = req.body;
     if (usersData[userId] && Array.isArray(roles)) {
