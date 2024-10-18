@@ -8,8 +8,8 @@
   ],
   "routes": [
     {
-      "src": "/(.*)",   // This catches all routes
-      "dest": "/app.js" // Send them to the Node.js server (app.js)
+      "src": "/(.*)",
+      "dest": "app.js"
     }
   ]
 }
