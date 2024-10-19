@@ -85,7 +85,7 @@ passport.use(new DiscordStrategy({
 
 // Serialize user into the session
 passport.serializeUser((user, done) => {
-    done(null, user.id);
+    done(null, user);  // Store the full user object, not just the ID
 });
 
 passport.deserializeUser((id, done) => {
