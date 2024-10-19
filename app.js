@@ -7,11 +7,11 @@ const path = require('path');
 const fs = require('fs');
 const app = express();
 const PORT = 3000;
+const scopes = ['identify'];
+let users = {};
+let availableRoles = ['Cape Team', 'Cape Head', 'Customer Support', 'Support Head', 'Moderation', 'Moderation Administration', 'Administration'];
 
-const adminUserID = '372465696556187648';  // Replace with the actual admin user ID
 const usersDataFile = path.join(__dirname, 'usersData.json');
-
-// Load users data from JSON file
 let usersData;
 try {
     usersData = JSON.parse(fs.readFileSync(usersDataFile, 'utf8'));
@@ -19,21 +19,15 @@ try {
     console.error('Error loading users data:', err);
     usersData = {};
 }
+
 function saveUsersData() {
     fs.writeFileSync(usersDataFile, JSON.stringify(usersData, null, 2), 'utf8');
 }
-
-let availableRoles = [
-    'Cape Team', 'Cape Head', 'Customer Support', 
-    'Support Head', 'Moderation', 'Moderation Administration', 'Administration'
-];
-
 
 // Serve static files from the "public" directory
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json()); // For parsing application/json
 app.use(express.urlencoded({ extended: true })); // For parsing application/x-www-form-urlencoded
-
 
 // Configure session middleware
 app.use(session({
@@ -50,13 +44,6 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Define the scopes that will be requested from Discord
-const scopes = ['identify'];
-
-// Configure the Discord OAuth strategy
-let users = {};  // In-memory storage for user profiles
-
-// Configure the Discord OAuth strategy
 passport.use(new DiscordStrategy({
     clientID: process.env.DISCORD_CLIENT_ID,
     clientSecret: process.env.DISCORD_CLIENT_SECRET,
@@ -81,8 +68,6 @@ passport.use(new DiscordStrategy({
     return done(null, profile);
 }));
 
-
-
 // Serialize user into the session
 passport.serializeUser((user, done) => {
     done(null, user);  // Store the full user object, not just the ID
@@ -100,6 +85,7 @@ passport.deserializeUser((id, done) => {
     }
 });
 
+// LINKS
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -109,20 +95,43 @@ app.get('/terms', (req, res) => {
 app.get('/privacy', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'privacy.html'));
 });
+app.get('/discord', (req, res) => {
+    res.redirect('https://discord.gg/9zk4umeHcD');
+});
 app.get('/staff', ensureAuthenticated, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'staff.html'));
 });
-
 app.get('/cape', ensureCapeTeam, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'cape.html'));
 });
 app.get('/mod', ensureModeration, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'mod.html'));
 });
-app.get('/discord', (req, res) => {
-    res.redirect('https://discord.gg/9zk4umeHcD');
-  });
-  
+app.get('/admin', ensureAdministration, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+app.get('/logout', (req, res) => {
+    req.logout((err) => {
+        if (err) {
+            console.error('Error logging out:', err);
+        }
+        res.redirect('/');
+    });
+});
+app.get('/auth/discord', (req, res, next) => {
+    if (req.isAuthenticated()) {
+        return res.redirect('/staff');  // Redirect if already logged in
+    }
+    next();
+}, passport.authenticate('discord'));
+app.get('/auth/discord/callback',
+    passport.authenticate('discord', { failureRedirect: '/' }),
+    (req, res) => {
+        console.log('User authenticated successfully:', req.user);
+        console.log("Session after authentication:", req.session);
+        res.redirect('/staff');
+    }
+);
 app.get('/api/user', ensureAuthenticated, (req, res) => {
     const username = users[req.user.id]?.username || "User"; // Get the username from the users object
     res.json({ username }); // Send the username as a JSON response
@@ -134,59 +143,6 @@ app.get('/api/user/roles', ensureAuthenticated, (req, res) => {
     console.log("HEY RO ", roles);
     res.json({ roles });  // Send the user's roles as a JSON response
 });
-
-
-// Logout route
-app.get('/logout', (req, res) => {
-    req.logout((err) => {
-        if (err) {
-            console.error('Error logging out:', err);
-        }
-        res.redirect('/');
-    });
-});
-
-// Discord OAuth login route
-app.get('/auth/discord', (req, res, next) => {
-    if (req.isAuthenticated()) {
-        return res.redirect('/staff');  // Redirect if already logged in
-    }
-    next();
-}, passport.authenticate('discord'));
-
-// Discord OAuth callback route
-app.get('/auth/discord/callback',
-    passport.authenticate('discord', { failureRedirect: '/' }),
-    (req, res) => {
-        console.log('User authenticated successfully:', req.user);
-        console.log("Session after authentication:", req.session);
-        res.redirect('/staff');
-    }
-);
-
-function ensureAuthenticated(req, res, next) {
-    console.log('Checking authentication:', req.isAuthenticated());  // Add this log
-    console.log('Session Data:', req.session); // Add this log
-    if (req.isAuthenticated()) {
-        const userID = req.user?.id; // Retrieve the user ID
-        console.log(`User ID: ${userID}, Roles: ${JSON.stringify(usersData[userID]?.roles)}`);
-        if (usersData[userID]) {
-            return next();
-        } else {
-            console.log('User not found in usersData:', userID);
-            return res.status(403).send('You are not authorized to access this page.');
-        }
-    }
-    console.log('User not authenticated, redirecting to home page.');
-    res.redirect('/');
-}
-
-// Admin route to manage permissions and display user profiles
-app.get('/admin', ensureAdministration, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
-});
-
-// Routes to get all users and roles (admin only)
 app.get('/api/admin/users', ensureAdministration, (req, res) => {
     res.json(usersData);  // Send all users and their roles
 });
@@ -230,6 +186,23 @@ app.post('/api/admin/users/:id/roles', ensureAdministration, (req, res) => {
         res.status(400).json({ message: 'Invalid input or user not found' });
     }
 });
+
+function ensureAuthenticated(req, res, next) {
+    console.log('Checking authentication:', req.isAuthenticated());  // Add this log
+    console.log('Session Data:', req.session); // Add this log
+    if (req.isAuthenticated()) {
+        const userID = req.user?.id; // Retrieve the user ID
+        console.log(`User ID: ${userID}, Roles: ${JSON.stringify(usersData[userID]?.roles)}`);
+        if (usersData[userID]) {
+            return next();
+        } else {
+            console.log('User not found in usersData:', userID);
+            return res.status(403).send('You are not authorized to access this page.');
+        }
+    }
+    console.log('User not authenticated, redirecting to home page.');
+    res.redirect('/');
+}
 
 // Middleware to ensure user has "Cape Team" or "Administration" role
 function ensureCapeTeam(req, res, next) {
