@@ -41,7 +41,7 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: { 
-        secure: false,  // Change to true when using HTTPS
+        secure: true,  // Change to true when using HTTPS
         maxAge: 1000 * 60 * 60 * 24 * 7  // 1 week
     }
 }));
@@ -182,7 +182,7 @@ function ensureAuthenticated(req, res, next) {
     console.log('Checking authentication:', req.isAuthenticated());  // Add this log
     console.log('Session Data:', req.session); // Add this log
     if (req.isAuthenticated()) {
-        const userID = req.session.passport['user'] || req.user.id; // Retrieve the user ID
+        const userID = req.user?.id; // Retrieve the user ID
         console.log(`User ID: ${userID}, Roles: ${JSON.stringify(usersData[userID]?.roles)}`);
         if (usersData[userID]) {
             return next();
