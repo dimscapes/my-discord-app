@@ -21,7 +21,11 @@ try {
 }
 
 function saveUsersData() {
-    fs.writeFileSync(usersDataFile, JSON.stringify(usersData, null, 2), 'utf8');
+    try {
+        fs.writeFileSync(usersDataFile, JSON.stringify(usersData, null, 2), 'utf8');
+    } catch (err) {
+        console.error('Error saving users data:', err);
+    }
 }
 
 // Serve static files from the "public" directory
@@ -75,7 +79,7 @@ passport.serializeUser((user, done) => {
 
 passport.deserializeUser((id, done) => {
     console.log('Deserializing user with ID:', id); // Add this log
-    const user = usersData[id]; // Or fetch the user from another source
+    const user = users[id]; // Or fetch the user from another source
     if (user) {
         console.log('User found in deserializeUser:', user); // Add this log
         done(null, user);
