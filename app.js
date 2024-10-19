@@ -40,7 +40,10 @@ app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    cookie: { secure: false }  // Use secure: true if using HTTPS in production
+    cookie: { 
+        secure: true,  // Change to true when using HTTPS
+        maxAge: 1000 * 60 * 60 * 24 * 7  // 1 week
+    }
 }));
 
 // Passport initialization
@@ -86,9 +89,14 @@ passport.serializeUser((user, done) => {
 });
 
 passport.deserializeUser((id, done) => {
-    // Retrieve user information from usersData or another data source
-    const user = usersData[id];
-    done(null, user); // Or done(null, { id }); if you only want to store ID
+    console.log('Deserializing user with ID:', id);
+    if (usersData[id]) {
+        console.log('User found:', usersData[id]);
+        done(null, usersData[id]);
+    } else {
+        console.log('User not found');
+        done(null, false);
+    }
 });
 
 app.get('/', (req, res) => {
