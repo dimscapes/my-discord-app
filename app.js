@@ -89,13 +89,14 @@ passport.serializeUser((user, done) => {
 });
 
 passport.deserializeUser((id, done) => {
-    console.log('Deserializing user with ID:', id);
-    if (usersData[id]) {
-        console.log('User found:', usersData[id]);
-        done(null, usersData[id]);
+    console.log('Deserializing user with ID:', id); // Add this log
+    const user = usersData[id]; // Or fetch the user from another source
+    if (user) {
+        console.log('User found in deserializeUser:', user); // Add this log
+        done(null, user);
     } else {
-        console.log('User not found');
-        done(null, false);
+        console.log('No user found for ID:', id); // Add this log
+        done(null, false); // No user found, session might be invalid
     }
 });
 
@@ -178,6 +179,8 @@ app.get('/auth/discord/callback',
 );
 
 function ensureAuthenticated(req, res, next) {
+    console.log('Checking authentication:', req.isAuthenticated());  // Add this log
+    console.log('Session Data:', req.session); // Add this log
     if (req.isAuthenticated()) {
         const userID = req.session.passport['user'] || req.user.id; // Retrieve the user ID
         console.log(`User ID: ${userID}, Roles: ${JSON.stringify(usersData[userID]?.roles)}`);
