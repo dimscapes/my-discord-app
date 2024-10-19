@@ -55,21 +55,23 @@ passport.use(new DiscordStrategy({
     scope: scopes
 },
 (accessToken, refreshToken, profile, done) => {
+    // Check if the user is authorized
     if (!usersData[profile.id]) {
         return done(null, false, { message: 'You are not authorized to log in.' });
     }
 
-    // Save user profile information
-    users[profile.id] = {
+    // Save user profile information to usersData
+    usersData[profile.id] = {
         id: profile.id,
         username: profile.username,
         avatar: profile.avatar,
-        discriminator: profile.discriminator
+        discriminator: profile.discriminator,
+        roles: usersData[profile.id]?.roles || []  // Include roles if available
     };
 
     // Log the session here
     console.log("Session before done:", profile);
-    return done(null, profile);
+    return done(null, usersData[profile.id]); // Pass the user object from usersData
 }));
 
 // Serialize user into the session
